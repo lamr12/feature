@@ -70,9 +70,7 @@ Vagrant.configure(2) do |config|
   #   sudo apt-get update
   #   sudo apt-get install -y apache2
   # SHELL
-  config.vm.provision :ansible do |ansible|
-    # configurar bien esto ----	
-    # ansible.playbook = "ansible-playbooks/main.yml"
-    # ansible.verbose = 'vvvv'
+  config.vm.provision :ansible do |ansible|	
+    ansible.playbook = "ansible-playbooks/main.yml"
   end
 end
