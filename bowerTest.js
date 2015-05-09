@@ -1,5 +1,9 @@
 var bower = require('bower');
 var Q = require('q');
+var shell = require('shelljs');
+var uglifyJS = require("uglify-js");
+var fs = require('fs');
+
 var exports = module.exports = {};
 
 function isEmptyJSON(obj) {
@@ -77,3 +81,27 @@ exports.searchPackage = function(name) {
 
 	return deferred.promise;
 };
+
+exports.minify = function(file) {
+	var result;
+
+	result = uglifyJS.minify('file', {
+		mangle: true,
+		compress: {
+			sequences: true,
+			dead_code: true,
+			conditionals: true,
+			booleans: true,
+			unused: true,
+			if_return: true,
+			join_vars: true,
+			drop_console: true
+		}
+	});
+
+	fs.writeFileSync('compile.min.js', result.code);
+}
+
+exports.concat = function(files) {
+	return shell.cat(files);
+}
