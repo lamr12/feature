@@ -22,10 +22,34 @@ exports.installPackage = function(fileName) {
 	bower.commands
 		.install([fileName], { save: true }, {/* custom config*/})
 		.on('end', function (result) {
+			console.log("instalando Paquetes...");
+			console.log(result);
 			deferred.resolve(true);
 		})
 		.on('error', function (err) {
-			if (err.code === "ENOTFOUND") {
+			if(err.code === "ECONFLICT") {
+				deferred.reject("Error de conflicto");
+			}
+
+			if (err.code === "ENOTFOUND" || err.code === "ENORESTARGET") {
+				deferred.reject("Archivo no encontrado"); 				
+ 			}
+		})
+
+	return deferred.promise;
+};
+
+exports.installTest = function(fileName) {
+	var deferred = Q.defer();
+
+	bower.commands
+		.install(["jquery#1.9.1.45.4"], { save: true }, {/* custom config*/})
+		.on('end', function (result) {
+			deferred.resolve(true);
+		})
+		.on('error', function (err) {
+
+			if (err.code === "ENOTFOUND" || err.code === "ENORESTARGET") {
 				deferred.reject("Archivo no encontrado"); 				
  			}
 		})
@@ -39,11 +63,14 @@ exports.listPackage = function() {
 	bower.commands
 		.list({paths:true})
 		.on('end', function (data) {
+			console.log("listando Paquetes...");
+			console.log(data);
 
 			deferred.resolve(data);
 			
 		})
 		.on('error', function (err) {
+			console.log("Error listando Paquetes...");
 			deferred.reject("error");
 		})
 
@@ -76,6 +103,7 @@ exports.searchPackage = function(name) {
 			} 
 		})
 		.on('error', function (err) {
+			console.log(err)
 			deferred.reject("error");
 		})
 
@@ -104,4 +132,26 @@ exports.minify = function(file) {
 
 exports.concat = function(files) {
 	return shell.cat(files);
+}
+
+exports.getFile = function(filePath) {
+	var deferred = Q.defer();
+
+	fs.readFile(filePath, {encoding: 'utf-8'}, function(err,data) {
+	    if (!err) {
+	    	deferred.resolve(data);
+	    }else{
+	        console.log(err);
+	        deferred.reject("error");
+	    }
+	});
+
+	return  deferred.promise;
+}
+
+exports.verifyMain = function(file, path) {
+	 var n = path[file].search(file+".js");
+	 console.log("verificando");
+	 console.log(n);
+	// return n ;
 }
