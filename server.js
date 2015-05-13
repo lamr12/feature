@@ -11,50 +11,89 @@ var fs = require('fs');
 
 
 var installPackages = function(packages) {
-	var count,
-		promises;
+	var count,promises;
 
-	console.log(packages);
 	count = Object.keys(packages).length;
 	promises = [];
 
 	if(count >= 1) {
-		Object.keys(packages).forEach(function (val,index) {
-		var deferred = Q.defer();
- 			apiBower.searchPackage(val)
-		 		.then(function (data) {
-	 			if(!data) {
-	 				apiBower.installPackage(val)
-	 					.then(function (data) {
-	 						apiBower.listPackage()
-	 							.then(function (data) {
-	 								deferred.resolve(data);
-	 							})
-	 					})
-	 			}
-	 		})
-		 	promises.push(deferred.promise);
-	 	});
 
+		console.log(packages[Object.keys(packages)]);
+
+		Object.keys(packages).forEach(function (val,index) {
+
+			if(packages[val] !== '') {
+				var deferred = Q.defer();
+				var file = val + "#" + packages[Object.keys(packages)];
+				apiBower.searchPackage(file)
+		 		.then(function (data) {
+		 		console.log("busqueda de paquete...");
+		 		console.log(data);	
+	 			if(!data) {
+		 				apiBower.installPackage(file)
+		 					.then(function (data) {
+		 						console.log(data);
+
+		 						apiBower.listPackage()
+		 							.then(function (data) {
+		 								deferred.resolve(apiBower.verifyMain(val,data));
+		 							})
+		 					}, function(err) {
+		 						deferred.reject(err);
+		 					})
+		 			}
+		 		}, function(err) {
+
+		 		});
+			 	promises.push(deferred.promise);
+
+			} else {
+				Object.keys(packages).forEach(function (val,index) {
+				var deferred = Q.defer();
+		 			apiBower.searchPackage(val)
+				 		.then(function (data) {
+			 			if(!data) {
+			 				apiBower.installPackage(val)
+			 					.then(function (data) {
+			 						apiBower.listPackage()
+			 							.then(function (data) {
+			 								deferred.resolve(apiBower.verifyMain(val,data));
+			 							})
+			 					})
+			 			}
+			 		})
+				 	promises.push(deferred.promise);
+			 	});
+			}	
+		});
+		
 	 	return Q.all(promises);
 	}
 }
 
 app.get('/', function(req, res) {
-	res.end("Mixer.js");   
+	res.end("Mixer.js");
 });
 	
 app.get('/compile.js', function(req, res) {
-	
+
 	var promise = installPackages(req.query);
+	console.log("trabaa");
+	var files = Object.keys(req.query);
+	var toConcat;
+
 	promise.then(function(data) {
 		var paths;
 		paths = [];
-		console.log(data);
 
-		Object.keys(data[0]).forEach(function (val,index) {
-			paths.push(data[0][val]);
+		files.forEach(function (e) {
+			toConcat = data.filter(function (elm) {
+				console.log(Object.keys(elm)[0]);
+				return (Object.keys(elm)[0] === e);
+			})
 		});
+
+		console.log(toConcat);
 
 		if(paths.length > 1) {
 			console.log(paths);
@@ -62,12 +101,18 @@ app.get('/compile.js', function(req, res) {
 			fs.writeFileSync('compile.js', file);
 			res.sendFile(__dirname + '/compile.js');
 		}else if(paths.length === 1) {
-			console.log(paths);
-			var file = __dirname + '/' + paths[0];
-			fs.writeFileSync('compile.js', file);
-			res.sendFile(__dirname + '/compile.js');
+			var file,p;
+			file = __dirname + '/' + paths[0];
+			p = apiBower.getFile(file);
+			p.then(function(data) {
+				fs.writeFileSync('compile.js', data);
+				//res.sendStatus(404);
+				res.sendFile(__dirname + '/compile.js');
+			});
 		}
 		
+	}, function(err) {
+		res.end(err);
 	})
 });
 
