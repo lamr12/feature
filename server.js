@@ -19,7 +19,6 @@ var installPackages = function(packages) {
 	if(count >= 1) {
 
 		Object.keys(packages).forEach(function (val,index) {
-
 			if(packages[val] !== '') {
 				var deferred = Q.defer();
 				var file = val + "#" + packages[val];
