@@ -18,44 +18,26 @@ function isEmptyJSON(obj) {
 
 exports.installPackage = function(fileName) {
 	var deferred = Q.defer();
-
+	console.log("Initiating installation process");
 	bower.commands
 		.install([fileName], { save: true }, {/* custom config*/})
 		.on('end', function (result) {
-			console.log("instalando Paquetes...");
-			console.log(result);
+			console.log("Installing Packages...");
 			deferred.resolve(true);
 		})
 		.on('error', function (err) {
 			if(err.code === "ECONFLICT") {
-				deferred.reject("Error de conflicto");
+				deferred.reject("Conflict error");
 			}
 
 			if (err.code === "ENOTFOUND" || err.code === "ENORESTARGET") {
-				deferred.reject("Archivo no encontrado"); 				
+				deferred.reject("File not found"); 				
  			}
 		})
 
 	return deferred.promise;
 };
 
-exports.installTest = function(fileName) {
-	var deferred = Q.defer();
-
-	bower.commands
-		.install(["jquery#1.9.1.45.4"], { save: true }, {/* custom config*/})
-		.on('end', function (result) {
-			deferred.resolve(true);
-		})
-		.on('error', function (err) {
-
-			if (err.code === "ENOTFOUND" || err.code === "ENORESTARGET") {
-				deferred.reject("Archivo no encontrado"); 				
- 			}
-		})
-
-	return deferred.promise;
-};
 
 exports.listPackage = function() {
 	var deferred = Q.defer();
@@ -63,15 +45,11 @@ exports.listPackage = function() {
 	bower.commands
 		.list({paths:true})
 		.on('end', function (data) {
-			console.log("listando Paquetes...");
-			console.log(data);
-
 			deferred.resolve(data);
-			
 		})
 		.on('error', function (err) {
-			console.log("Error listando Paquetes...");
-			deferred.reject("error");
+			console.log("Error packages listing...");
+			deferred.reject(err);
 		})
 
 	return deferred.promise;
@@ -83,8 +61,10 @@ exports.searchPackage = function(name) {
 	bower.commands
 		.list({paths:true})
 		.on('end', function (data) {
-			if(Object.keys(data).lenght > 0) {
+			console.log("looking packages...");
+			if(Object.keys(data).length > 0) {
 				Object.keys(data).forEach(function(p) {
+					
 					if(name === p) {
 						deferred.resolve
 						(
@@ -110,6 +90,38 @@ exports.searchPackage = function(name) {
 	return deferred.promise;
 };
 
+exports.searchPackageInstalled = function(name) {
+	var deferred = Q.defer();
+	var rObj = [];
+
+	name.forEach(function(val,index) {
+		bower.commands
+		.list({paths:true})
+		.on('end', function (data) {
+			if(Object.keys(data).length > 0) {
+				Object.keys(data).forEach(function(p) {
+					if(val === p) {
+						rObj.push
+							(
+								{
+									'exist':true,
+									'name':p,
+									'path':data[p]
+								}
+							)
+					}
+				});
+			}
+		});
+	})
+
+	setTimeout( function() {
+        deferred.resolve(rObj);
+    }, 2000);
+
+	return deferred.promise;
+};
+
 exports.minify = function(file) {
 	var result;
 
@@ -130,7 +142,16 @@ exports.minify = function(file) {
 	fs.writeFileSync('compile.min.js', result.code);
 }
 
-exports.concat = function(files) {
+exports.concat = function(f) {
+	var files = [];
+
+	console.log("concatenating...")
+	f.forEach(function(val) {
+		files.push(val.path);
+	})
+
+	console.log(files);
+
 	return shell.cat(files);
 }
 
@@ -149,9 +170,14 @@ exports.getFile = function(filePath) {
 	return  deferred.promise;
 }
 
-exports.verifyMain = function(file, path) {
-	 var n = path[file].search(file+".js");
-	 console.log("verificando");
-	 console.log(n);
-	// return n ;
+exports.verifyMain = function(path) {
+	path.forEach(function (val) {
+		var n = val.path.search(val.name+".js");
+		if(n !== -1) {
+		}else {
+			val.path = val.path + "/" + val.name+".js";
+		}
+	});
+
+	return path; 
 }

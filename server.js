@@ -18,97 +18,110 @@ var installPackages = function(packages) {
 
 	if(count >= 1) {
 
-		if(packages[Object.keys(packages)] !== '') {
-			Object.keys(packages).forEach(function (val,index) {
+		Object.keys(packages).forEach(function (val,index) {
+
+			if(packages[val] !== '') {
 				var deferred = Q.defer();
-				var file = val + "#" + packages[Object.keys(packages)];
+				var file = val + "#" + packages[val];
 				apiBower.searchPackage(file)
 		 		.then(function (data) {
 	 			if(!data) {
 		 				apiBower.installPackage(file)
 		 					.then(function (data) {
-		 						console.log(data);
-
 		 						apiBower.listPackage()
 		 							.then(function (data) {
-		 								apiBower.verifyMain(val,data);
-		 								deferred.resolve(data);
+		 								deferred.resolve(true);
+		 							}, function(err) {
+		 								deferred.reject(err);
 		 							})
 		 					}, function(err) {
 		 						deferred.reject(err);
 		 					})
 		 			}
-		 		})
-			 	promises.push(deferred.promise);
-			});
-		}else {
-			Object.keys(packages).forEach(function (val,index) {
-			var deferred = Q.defer();
-	 			apiBower.searchPackage(val)
-			 		.then(function (data) {
-		 			if(!data) {
-		 				apiBower.installPackage(val)
-		 					.then(function (data) {
-		 						apiBower.listPackage()
-		 							.then(function (data) {
-		 								apiBower.verifyMain(val,data);
-		 								deferred.resolve(data);
-		 							})
-		 					})
-		 			}
-		 		})
-			 	promises.push(deferred.promise);
-		 	});
+		 		}, function(err) {
 
-		}
+		 		});
+			 	promises.push(deferred.promise);
+
+			} else {
+				var deferred = Q.defer();
+		 			apiBower.searchPackage(val)
+				 		.then(function (data) {
+			 			if(!data) {
+			 				apiBower.installPackage(val)
+			 					.then(function (data) {
+			 						apiBower.listPackage()
+			 							.then(function (data) {
+			 								deferred.resolve(true);
+			 							}, function (err) {
+			 								deferred.reject(err);
+			 							})
+			 					})
+			 			}
+			 		})
+				 	promises.push(deferred.promise);
+			}	
+		});
+		
 	 	return Q.all(promises);
 	}
 }
 
+var listPackagesInstalled = function(files) {
+	var promises,rObj;
+
+	promises = [];
+
+	files.forEach(function (e) {
+		var deferred = Q.defer();
+		var p = apiBower.searchPackage(e);
+
+		p.then(function(data) {
+			rObj[e] = data.path;
+			deferred.resolve(rObj);
+		});
+
+		promises.push(deferred.promise);
+	});
+	
+	return Q.all(promises);
+}
+
 app.get('/', function(req, res) {
-	var promise = apiBower.installTest("algo");
-
-	promise.then(function(data) {
-		res.end("Mixer.js success");   
-	});
-
-	promise.fail(function (error) {
-		res.end("Mixer.js Error");   
-	});
-
-
+	res.end("Mixer.js");
 });
 	
 app.get('/compile.js', function(req, res) {
-	
+
 	var promise = installPackages(req.query);
-	promise.then(function(data) {
-		var paths;
-		paths = [];
-		console.log("asdasdasd");
+	var files = Object.keys(req.query);
 
-		console.log(data);
+	promise.then(function(d) {
+		var p;
 
-		Object.keys(data[0]).forEach(function (val,index) {
-			paths.push(data[0][val]);
-		});
+		console.log("Search files for concat");
+		p = apiBower.searchPackageInstalled(files);
 
-		if(paths.length > 1) {
-			console.log(paths);
-			var file = apiBower.concat(paths);
-			fs.writeFileSync('compile.js', file);
-			res.sendFile(__dirname + '/compile.js');
-		}else if(paths.length === 1) {
-			var file,p;
-			file = __dirname + '/' + paths[0];
-			p = apiBower.getFile(file);
-			p.then(function(data) {
-				fs.writeFileSync('compile.js', data);
-				//res.sendStatus(404);
+		p.then(function(data) {
+			if(data.length > 1) {
+				console.log(data);
+				data = apiBower.verifyMain(data)
+				var file = apiBower.concat(data);
+				fs.writeFileSync('compile.js', file);
 				res.sendFile(__dirname + '/compile.js');
-			});
-		}
-		
+			}else if(data.length === 1) {
+				var file,p;
+				data = apiBower.verifyMain(data);
+				file = __dirname + '/' + data[0].path;
+				p = apiBower.getFile(file);
+				p.then(function(f) {
+					fs.writeFileSync('compile.js', f);
+					//res.sendStatus(404);
+					res.sendFile(__dirname + '/compile.js');
+				});
+			}
+
+		});
 	}, function(err) {
 		res.end(err);
 	})
