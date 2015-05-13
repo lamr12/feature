@@ -6,7 +6,6 @@ var fs = require('fs');
 
 var exports = module.exports = {};
 
-
 function isEmptyJSON(obj) {
 	var name;
 
