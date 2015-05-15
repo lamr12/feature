@@ -16,29 +16,30 @@ function isEmptyJSON(obj) {
   	return true;
 }
 
+
 exports.installPackage = function(fileName) {
 	var deferred = Q.defer();
-	console.log("iniciando proceso de instalacion");
+	console.log("Initiating installation process");
+
 	bower.commands
-		.install([fileName], { save: true }, {/* custom config*/})
+		.install([fileName], { save: true }, {})
 		.on('end', function (result) {
-			console.log("instalando Paquetes...");
-			console.log(result);
+			console.log("Installing Packages... " + fileName);
 			deferred.resolve(true);
 		})
 		.on('error', function (err) {
+
 			if(err.code === "ECONFLICT") {
-				deferred.reject("Error de conflicto");
+				deferred.reject("Conflict error");
 			}
 
 			if (err.code === "ENOTFOUND" || err.code === "ENORESTARGET") {
-				deferred.reject("Archivo no encontrado"); 				
+				deferred.reject("File not found"); 				
  			}
 		})
 
 	return deferred.promise;
 };
-
 
 exports.listPackage = function() {
 	var deferred = Q.defer();
@@ -46,15 +47,11 @@ exports.listPackage = function() {
 	bower.commands
 		.list({paths:true})
 		.on('end', function (data) {
-			console.log("listando Paquetes...");
-			console.log(data);
-
 			deferred.resolve(data);
-			
 		})
 		.on('error', function (err) {
-			console.log("Error listando Paquetes...");
-			deferred.reject("error");
+			console.log("Error packages listing...");
+			deferred.reject(err);
 		})
 
 	return deferred.promise;
@@ -63,34 +60,62 @@ exports.listPackage = function() {
 exports.searchPackage = function(name) {
 	var deferred = Q.defer();
 
+	name = name.replace(/[\d\#.]+/g, "");
+    
 	bower.commands
 		.list({paths:true})
 		.on('end', function (data) {
-			console.log("buscando paquetes...");
-			console.log(data);
-			if(Object.keys(data).lenght > 0) {
+			var exist = {};
+			console.log("looking packages...");
+			if(Object.keys(data).length > 0) {
+				exist.exist = false;
 				Object.keys(data).forEach(function(p) {
 					if(name === p) {
-						deferred.resolve
-						(
-							{
-								'exist':true,
-								'name':p,
-								'path':data[p]
-							}
-						);
-					} else {
-						deferred.resolve(false);
-					}	
+						exist.exist = true 	
+					} 
 				});
+				deferred.resolve(exist);
 			}else {
-				deferred.resolve(false);
+				exist.exist = false;
+				deferred.resolve(exist);
 			} 
 		})
 		.on('error', function (err) {
 			console.log(err)
 			deferred.reject("error");
 		})
+
+	return deferred.promise;
+};
+
+exports.searchPackageInstalled = function(name) {
+	var deferred = Q.defer();
+	var rObj = [];
+
+	name.forEach(function(val,index) {
+		bower.commands
+		.list({paths:true})
+		.on('end', function (data) {
+			if(Object.keys(data).length > 0) {
+				Object.keys(data).forEach(function(p) {
+					if(val === p) {
+						rObj.push
+							(
+								{
+									'exist':true,
+									'name':p,
+									'path':data[p]
+								}
+							)
+					}
+				});
+			}
+		});
+	})
+
+	setTimeout( function() {
+        deferred.resolve(rObj);
+    }, 2000);
 
 	return deferred.promise;
 };
@@ -115,8 +140,16 @@ exports.minify = function(file) {
 	fs.writeFileSync('compile.min.js', result.code);
 }
 
-exports.concat = function(files) {
-	console.log("concatenando...")
+exports.concat = function(f) {
+	var files = [];
+
+	console.log("concatenating...")
+	f.forEach(function(val) {
+		files.push(val.path);
+	})
+
+	console.log(files);
+
 	return shell.cat(files);
 }
 
@@ -135,14 +168,14 @@ exports.getFile = function(filePath) {
 	return  deferred.promise;
 }
 
-exports.verifyMain = function(file, path) {
-	var n = path[file].search(file+".js");
-	console.log("verificando");
-	if(n !== -1) {
-		return path;
-	}else {
-		path[file] = path[file] + "/" + file+".js";
-		return 	path; 
-	}
-	// return n ;
+exports.verifyMain = function(path) {
+	path.forEach(function (val) {
+		var n = val.path.search(val.name+".js");
+		if(n !== -1) {
+		}else {
+			val.path = val.path + "/" + val.name+".js";
+		}
+	});
+
+	return path; 
 }
