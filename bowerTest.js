@@ -34,7 +34,7 @@ exports.installPackage = function(fileName) {
 			}
 
 			if (err.code === "ENOTFOUND" || err.code === "ENORESTARGET") {
-				deferred.reject("File not found"); 				
+				deferred.reject("File not found"); 		
  			}
 		})
 
@@ -179,3 +179,4 @@ exports.verifyMain = function(path) {
 
 	return path; 
 }
+

@@ -53,9 +53,9 @@ var installPackages = function(packages) {
 			 					.then(function (data) {
 			 						apiBower.listPackage()
 			 							.then(function (data) {
-			 								deferred.resolve(true);
+			 							deferred.resolve(true);
 			 							}, function (err) {
-			 								deferred.reject(err);
+			 							deferred.reject(err);
 			 							})
 			 					}, function(err) {
 			 						deferred.reject(err);
