@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>El Juego de la Vida | Alexys Gonzalez</title>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="css/bootstrap.min.css" type="text/css" />
+        <link rel="stylesheet" href="css/bootstrap-colorpicker.min.css" type="text/css" />
+    </head>
+    <body>
+        
+        <nav class="navbar navbar-default">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                  <a class="navbar-brand" href="#">Conway: El Juego de la Vida</a>
+                </div>
+                <p class="navbar-text">Hecho por Alexys Gonzalez</p>
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="#info">Info <span class="glyphicon glyphicon-question-sign"></span></a></li>
+                </ul>
+            </div>
+        </nav>
+        
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-4">
+                    <p>Iteraciones: <span id="iteraciones" class="badge">0</span>; Celulas Vivas: <span id="vivas" class="badge">0</span></p>
+                    <p>Estado: <span id="estado" class="label label-success">Ejecutandose</span></p>
+                    <div class="btn-group" role="group">
+                        <button type="button" onclick="interfaz.pausa()" id="botonPlay" class="btn btn-danger">Pausa</button>
+                        <button type="button" onclick="interfaz.iterar()" id="botonIterar" disabled="disabled" class="btn btn-warning">Iterar 1 vez</button>
+                        <button type="button" onclick="interfaz.reiniciar()" id="botonReiniciar" class="btn btn-primary">Reiniciar</button>
+                        <button type="button" onclick="interfaz.grafica()" id="botonGrafica" disabled="disabled" class="btn btn-warning">Grafica de Evoluci&oacute;n</button>
+                    </div>
+                    <hr>
+                    
+                    <div class="panel panel-default">
+                      <div class="panel-heading">
+                        <h3 class="panel-title">Configuraciones</h3>
+                      </div>
+                      <div class="panel-body">
+                          
+                        <form>
+                            
+                            <ul class="nav nav-tabs" role="tablist">
+                              <li role="presentation" class="active"><a role="tab" data-toggle="tab" href="#tabcelulas">Celulas</a></li>
+                              <li role="presentation"><a role="tab" data-toggle="tab" href="#tabadicionales">Adicionales</a></li>
+                            </ul>
+                            
+                            <div class="tab-content">
+                                <div role="tabpanel" class="tab-pane active" id="tabcelulas">
+                                    <div class="form-group">
+                                        <label for="tamano">Tama&ntilde;o</label>
+                                        <input type="number" class="form-control" id="tamano" value="10" onkeypress="return esNumero(event)"/>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="filas">Filas</label>
+                                                <input type="number" class="form-control" id="filas" value="50" onkeypress="return esNumero(event)"/>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="columnas">Columnas</label>
+                                                <input type="number" class="form-control" id="columnas" value="81" onkeypress="return esNumero(event)"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="aleatorio" title="Menor valor, mayor probabilidades de celulas vivas. Afecta el tablero inicial solamente. Min 1 Max 9. Valor Ideal 8.">Constante de Aletoriedad <a title="Menor valor, mayor probabilidades de celulas vivas. Afecta el tablero inicial solamente. Min 1 Max 9. Valor Ideal 8.">?</a></a></label>
+                                        <input type="number" class="form-control" id="aleatorio" value="8" min="1" max="9" onkeypress="return esNumero(event)"/>
+                                    </div>
+                                    <button type="button" onclick="interfaz.reiniciar(this)" id="botonSetCanvas" class="btn btn-primary btn-block">Reiniciar</button>
+                                </div>
+                                <div role="tabpanel" class="tab-pane" id="tabadicionales">
+                                    <div class="form-group">
+                                        <label for="velocidad">Velocidad</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="velocidad" value="30" onkeypress="return esNumero(event)"/>
+                                            <span class="input-group-addon">iteraciones/segundo</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="colores">Colores</label>
+                                        <div class="input-group colorpicker">
+                                            <span class="input-group-addon"><i></i></span>
+                                            <input type="text" class="form-control" id="cvivo" value="#999"/>
+                                            <span id="labelcvivo" class="input-group-addon" style="background-color: #999"><span class="label label-success">Vivo</span></span>
+                                        </div>
+                                        <div class="input-group colorpicker">
+                                            <span class="input-group-addon"><i></i></span>
+                                            <input type="text" class="form-control" id="cmuerto" value="#fff"/>
+                                            <span id="labelcmuerto" class="input-group-addon" style="background-color: #fff"><span class="label label-default">Muerto</span></span>
+                                        </div>
+                                        <div class="input-group colorpicker">
+                                            <span class="input-group-addon"><i></i></span>
+                                            <input type="text" class="form-control" id="clinea" value="#37b"/>
+                                            <span id="labelclinea" class="input-group-addon" style="background-color: #37b"><span class="label label-info">Lineas</span></span>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-success btn-block" type="button" onclick="interfaz.setAdicionales()">Set</button>
+                                    <p class="help-block">Presionar para aplicar los cambios de velocidad y color</p>
+                                </div>
+                            </div>
+                        </form>
+
+                      </div>
+                    </div>
+                    
+                </div>
+                <div class="col-md-8">
+                    <div class="row">
+                        <div ></div>
+                    </div>
+                    <canvas id="grafica" width="800" height="450"style="border: 1px solid #000; display:none"></canvas>
+                    <canvas id="lienzo" width="800" height="450" style="border: 5px solid #37b"></canvas>            
+                </div>
+            </div>
+        </div>
+        <legend></legend>
+        <div id="info" class="container-fluid">
+            <h1>Informacion:</h1>
+            
+            <h2>Implementacion del algoritmo de Conway: Juego de la Vida</h2>
+            
+            <p>Caracteristicas:</p>
+            <ul>
+                <li>Renderizado en CANVAS HTML5.</li>
+                <li>Seguimiento en vivo del numero de iteraciones y de celulas vivas, ademas del estado de ejecucion.</li>
+                <li>Botones de Play/Pausa, Iterar 1 vez, Reinicio y Grafica de Evolucion de Celulas Vivas.</li>
+                <li>Configuracion del Tamano de la celula, cantidad de filas y columnas y una constante que influye en la cantidad aleatoria inicial de las celulas vivas.</li>
+                <li>Control de las iteraciones por segundo del juego.</li>
+                <li>Modificacion de los colores de las celulas vivas y muerta, ademas de las lineas divisorias haciendo uso del colorpicker.</li>
+            </ul>
+            
+            <p>
+                Se hace uso de Canvas HTML5 para el renderizado de los graficos del Juego de la Vida y del Grafico evolucion de Celulas Vivas, usando tecnicas para mejorar el
+                rendimiento y asi poder tener mayor numero de celulas y mayor velocidad (Iteraciones por segundo), se puede tener una excelente ejecucion de un tablero de 
+                50x80 celulas a 30 iteraciones por segundo. Ademas el llenado inicial aleatorio fue ajustado para generar una cantidad de celulas vivas estables y se puede
+                modificar en la interfaz. El codigo responsable del funcionamiento del juego y de la grafica esta hecho sin el uso de ningun tipo de framework (solo js nativo),
+                haciendo uso de tecnicasde programacion orientada a objetos mejorando el rendimiento total del codigo. Se uso bootstrap para estilizar la interfaz y se uso un 
+                plugin externo para el "Color Picker" en las opciones de colores del lienzo.
+            </p>
+        </div>
+        
+        <div style="background-color:#000;color:#fff; padding-top:5px">
+            <div class="container-fluid">
+                <p class="text-right">Hecho por Alexys Gonzalez</p>
+            </div>
+        </div>
+        
+        <script type="text/javascript" src="js/lib/jquery-2.1.4.min.js"></script>
+        <script type="text/javascript" src="js/lib/bootstrap.min.js"></script>
+        <script type="text/javascript" src="js/lib/bootstrap-colorpicker.min.js"></script>
+        
+        <script type="text/javascript" src="js/tablero.js"></script>
+        <script type="text/javascript" src="js/render.js"></script>
+        <script type="text/javascript" src="js/controlador.js"></script>
+        <script type="text/javascript" src="js/main.js"></script>
+        <script type="text/javascript">
+
+            //Habilitando el colorpicker
+            $(function(){
+                $('.colorpicker').colorpicker();
+            });
+            
+        </script>
+    </body>
+</html>
