@@ -6,9 +6,6 @@
   tasks:
     - name: update apt cache
       apt: update_cache=yes
-    - name: install nginx
-      apt: name=nginx state=present
-    - name: install nodejs
-      apt: name=nodejs state=present
-    - name: install npm
-      apt: name=npm state=present
+    - include: tasks/nginx.yml
+    - include: tasks/nodejs.yml
+    - include: tasks/npm.yml
