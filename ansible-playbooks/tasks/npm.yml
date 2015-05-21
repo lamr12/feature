@@ -1,3 +1,5 @@
 ---
 - name: install npm
   apt: name=npm state=present
+- name: install bower
+  npm: name=bower global=yes
