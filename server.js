@@ -104,9 +104,7 @@ var listPackagesInstalled = function(files) {
 
 app.get('/', function(req, res) {
 
-	res.status(404).send({"err":"error message here..."});
-
-	res.end("Mixer.js");//
+  
 });
 	
 app.get('/compile.js', function(req, res) {
@@ -140,7 +138,11 @@ app.get('/compile.js', function(req, res) {
 
 		});
 	}, function(err) {
-		res.status(404).send(err);
+		var code = 404;
+		var msg = err.msg + " file:" + err.file
+		
+		res.writeHead(code, msg, {'content-type' : 'text/plain'});
+		res.end(msg);
 	})
 });
 
@@ -184,7 +186,11 @@ app.get('/compile.min.js', function(req, res) {
 
 		});
 	}, function(err) {
-		res.status(404).send(err);
+		var code = 404;
+		var msg = err.msg + " file:" + err.file
+		
+		res.writeHead(code, msg, {'content-type' : 'text/plain'});
+		res.end(msg);
 	})
 });
 

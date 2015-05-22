@@ -41,11 +41,15 @@ exports.installPackage = function(fileName,lastVersion) {
 		.on('error', function (err) {
 
 			if(err.code === "ECONFLICT") {
-				deferred.reject("Conflict error");
+				deferred.reject({"msg":"Conflict error.", "file":fileName});
 			}
 
 			if (err.code === "ENOTFOUND" || err.code === "ENORESTARGET") {
-				deferred.reject("File not found"); 		
+				deferred.reject({"msg":"File not found.", "file":fileName}); 		
+ 			}
+
+ 			if (err.code === "ENORESTARGET") {
+ 				deferred.reject({"msg":"File version wrong.", "file":fileName});
  			}
 		})
 
@@ -229,5 +233,6 @@ exports.verifyMain = function(path) {
 
 	return path; 
 }
+
 
 
