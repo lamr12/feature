@@ -104,7 +104,9 @@ var listPackagesInstalled = function(files) {
 
 app.get('/', function(req, res) {
 
-	res.end("Mixer.js");
+	res.status(404).send({"err":"error message here..."});
+
+	res.end("Mixer.js");//
 });
 	
 app.get('/compile.js', function(req, res) {
@@ -133,6 +135,50 @@ app.get('/compile.js', function(req, res) {
 					fs.writeFileSync('compile.js', f);
 					
 					res.sendFile(__dirname + '/compile.js');
+				});
+			}
+
+		});
+	}, function(err) {
+		res.status(404).send(err);
+	})
+});
+
+app.get('/compile.min.js', function(req, res) {
+	var promise = installPackages(req.query);
+	var files = Object.keys(req.query);
+
+	promise.then(function(d) {
+		var p;
+
+		console.log("Search files for concat");
+		p = apiBower.searchPackageInstalled(req.query);
+
+		p.then(function(data) {
+			console.log(data);
+			if(data.length > 1) {
+				data = apiBower.verifyMain(data)
+				var file = apiBower.concat(data);
+				fs.writeFileSync('compile.js', file);
+
+				var result = apiBower.minify(__dirname + '/compile.js');
+
+				fs.writeFileSync('compile.min.js', result.code);
+
+				res.sendFile(__dirname + '/compile.min.js');
+			}else if(data.length === 1) {
+				var file,p;
+				data = apiBower.verifyMain(data);
+				file = __dirname + '/' + data[0].path;
+				p = apiBower.getFile(file);
+				p.then(function(f) {
+					fs.writeFileSync('compile.js', f);
+
+					var result = apiBower.minify(__dirname + '/compile.js');
+
+					fs.writeFileSync('compile.min.js', result.code);
+					
+					res.sendFile(__dirname + '/compile.min.js');
 				});
 			}
 

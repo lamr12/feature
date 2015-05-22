@@ -165,7 +165,9 @@ exports.searchPackageInstalled = function(packages) {
 exports.minify = function(file) {
 	var result;
 
-	result = uglifyJS.minify('file', {
+	console.log("minify ...");
+
+	result = uglifyJS.minify(file, {
 		mangle: true,
 		compress: {
 			sequences: true,
@@ -179,7 +181,7 @@ exports.minify = function(file) {
 		}
 	});
 
-	fs.writeFileSync('compile.min.js', result.code);
+	return result;
 }
 
 exports.concat = function(f) {
