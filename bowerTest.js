@@ -6,7 +6,7 @@ var fs = require('fs');
 
 var exports = module.exports = {};
 
-function isEmptyJSON(obj) {
+exports.isEmptyJSON = function(obj) {
 	var name;
 
  	for(name in obj) {
@@ -14,7 +14,7 @@ function isEmptyJSON(obj) {
  	}
 
   	return true;
-}
+};
 
 
 exports.installPackage = function(fileName,lastVersion) {
@@ -225,8 +225,9 @@ exports.verifyMain = function(path) {
 		n = val.path.search(name+".js");
 
 		if(n !== -1) {
+		}else if (name === 'mathjs') {
+			val.path = val.path;
 		}else {
-
 			val.path = val.path + "/" + name+".js";
 		}
 	});
