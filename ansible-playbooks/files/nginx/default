@@ -2,7 +2,7 @@ proxy_cache_path /jortech/develop/mixerjs/cache/nodecache levels=1:2 keys_zone=e
 
 upstream mynodeapp {
     server 127.0.0.1:3000;
-    keepalive 64;
+    keepalive 128;
 }
 
 server {
