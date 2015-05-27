@@ -10,8 +10,6 @@ Vagrant.configure(2) do |config|
 
   config.vm.network :forwarded_port, guest: 80, host: 9090
 
-  config.vm.network "public_network"
-
   config.vm.synced_folder "./www", "/www"
 
   config.vm.provision :shell, path: "bootstrap.sh"

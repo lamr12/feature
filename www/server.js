@@ -3,6 +3,7 @@ var apiBower = require('./bowerTest.js');
 var Q = require('q');
 var app = express(); 
 var fs = require('fs');
+var bower = require('bower');
 
 /* example route to manage 
 	http://127.0.0.1:3000/compile.js?jquery&underscore&angular&amplify
@@ -18,14 +19,16 @@ var installPackages = function(packages) {
 	if(count >= 1) {
 
 		Object.keys(packages).forEach(function (val,index) {
-
 			if(packages[val] !== '') {
-				var deferred = Q.defer();
-				var file = val + "#" + packages[val];
+				var file, lastVersion, deferred = Q.defer();
+
+				lastVersion = false;
+				file = val + "#" + packages[val];
+
 				apiBower.searchPackage(file)
 		 		.then(function (data) {
 	 			if(data.exist === false) {
-	 				apiBower.installPackage(file)
+	 				apiBower.installPackage(file, lastVersion)
 	 					.then(function (data) {
 	 						apiBower.listPackage()
 	 							.then(function (data) {
@@ -45,29 +48,33 @@ var installPackages = function(packages) {
 			 	promises.push(deferred.promise);
 
 			} else {
-				var deferred = Q.defer();
-		 			apiBower.searchPackage(val)
-				 		.then(function (data) {
-			 			if(data.exist === false) {
-			 				apiBower.installPackage(val)
-			 					.then(function (data) {
-			 						apiBower.listPackage()
-			 							.then(function (data) {
-			 							deferred.resolve(true);
-			 							}, function (err) {
-			 							deferred.reject(err);
-			 							})
-			 					}, function(err) {
-			 						deferred.reject(err);
-			 					})
-			 			}else if(data.exist === true) {
-			 				deferred.resolve(true);
-			 			}
-			 		}, function(err) {
-			 			deferred.reject(err);
-			 		});
+				var last, lastVersion ,deferred = Q.defer();
 
-				 	promises.push(deferred.promise);
+				lastVersion = true;
+				last = val + "#last";
+				
+	 			apiBower.searchPackage(last)
+			 		.then(function (data) {
+		 			if(data.exist === false) {
+		 				apiBower.installPackage(val,lastVersion)
+		 					.then(function (data) {
+		 						apiBower.listPackage()
+		 							.then(function (data) {
+		 							deferred.resolve(true);
+		 							}, function (err) {
+		 							deferred.reject(err);
+		 							})
+		 					}, function(err) {
+		 						deferred.reject(err);
+		 					})
+		 			}else if(data.exist === true) {
+		 				deferred.resolve(true);
+		 			}
+		 		}, function(err) {
+		 			deferred.reject(err);
+		 		});
+
+			 	promises.push(deferred.promise);
 			}	
 		});
 		
@@ -96,17 +103,11 @@ var listPackagesInstalled = function(files) {
 }
 
 app.get('/', function(req, res) {
-	apiBower.initBower().then(function(data) {
-		console.log(data);
-	}, function(err) {
-		console.log(err);
-	})
 
-	res.end("Mixer.js");
+  
 });
 	
-app.get('/compile.js', function(req, res) {
-
+app.get('/yourapi/compile.js', function(req, res) {
 	var promise = installPackages(req.query);
 	var files = Object.keys(req.query);
 
@@ -114,9 +115,10 @@ app.get('/compile.js', function(req, res) {
 		var p;
 
 		console.log("Search files for concat");
-		p = apiBower.searchPackageInstalled(files);
+		p = apiBower.searchPackageInstalled(req.query);
 
 		p.then(function(data) {
+			console.log(data);
 			if(data.length > 1) {
 				data = apiBower.verifyMain(data)
 				var file = apiBower.concat(data);
@@ -136,7 +138,59 @@ app.get('/compile.js', function(req, res) {
 
 		});
 	}, function(err) {
-		res.status(404).send(err);
+		var code = 404;
+		var msg = err.msg + " file:" + err.file
+		
+		res.writeHead(code, msg, {'content-type' : 'text/plain'});
+		res.end(msg);
+	})
+});
+
+app.get('/yourapi/compile.min.js', function(req, res) {
+	var promise = installPackages(req.query);
+	var files = Object.keys(req.query);
+
+	promise.then(function(d) {
+		var p;
+
+		console.log("Search files for concat");
+		p = apiBower.searchPackageInstalled(req.query);
+
+		p.then(function(data) {
+			console.log(data);
+			if(data.length > 1) {
+				data = apiBower.verifyMain(data)
+				var file = apiBower.concat(data);
+				fs.writeFileSync('compile.js', file);
+
+				var result = apiBower.minify(__dirname + '/compile.js');
+
+				fs.writeFileSync('compile.min.js', result.code);
+
+				res.sendFile(__dirname + '/compile.min.js');
+			}else if(data.length === 1) {
+				var file,p;
+				data = apiBower.verifyMain(data);
+				file = __dirname + '/' + data[0].path;
+				p = apiBower.getFile(file);
+				p.then(function(f) {
+					fs.writeFileSync('compile.js', f);
+
+					var result = apiBower.minify(__dirname + '/compile.js');
+
+					fs.writeFileSync('compile.min.js', result.code);
+					
+					res.sendFile(__dirname + '/compile.min.js');
+				});
+			}
+
+		});
+	}, function(err) {
+		var code = 404;
+		var msg = err.msg + " file:" + err.file
+		
+		res.writeHead(code, msg, {'content-type' : 'text/plain'});
+		res.end(msg);
 	})
 });
 

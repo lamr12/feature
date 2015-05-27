@@ -17,24 +17,39 @@ function isEmptyJSON(obj) {
 }
 
 
-exports.installPackage = function(fileName) {
+exports.installPackage = function(fileName,lastVersion) {
 	var deferred = Q.defer();
 	console.log("Initiating installation process");
-
+	console.log(fileName+lastVersion);
 	bower.commands
 		.install([fileName], { save: true }, {})
 		.on('end', function (result) {
+			var rename, name;
 			console.log("Installing Packages... " + fileName);
+			rename = fileName + "#last";
+			name = fileName;
+			name = name.replace(/[\d\#.]+/g, "");
+
+			if(lastVersion) {
+				fs.rename('bower_components/'+name,'bower_components/'+rename);
+			}else {
+				fs.rename('bower_components/'+name,'bower_components/'+fileName);
+			}
+
 			deferred.resolve(true);
 		})
 		.on('error', function (err) {
 
 			if(err.code === "ECONFLICT") {
-				deferred.reject("Conflict error");
+				deferred.reject({"msg":"Conflict error.", "file":fileName});
 			}
 
 			if (err.code === "ENOTFOUND" || err.code === "ENORESTARGET") {
-				deferred.reject("File not found"); 		
+				deferred.reject({"msg":"File not found.", "file":fileName}); 		
+ 			}
+
+ 			if (err.code === "ENORESTARGET") {
+ 				deferred.reject({"msg":"File version wrong.", "file":fileName});
  			}
 		})
 
@@ -60,8 +75,6 @@ exports.listPackage = function() {
 exports.searchPackage = function(name) {
 	var deferred = Q.defer();
 
-	name = name.replace(/[\d\#.]+/g, "");
-    
 	bower.commands
 		.list({paths:true})
 		.on('end', function (data) {
@@ -88,30 +101,63 @@ exports.searchPackage = function(name) {
 	return deferred.promise;
 };
 
-exports.searchPackageInstalled = function(name) {
+exports.searchPackageInstalled = function(packages) {
 	var deferred = Q.defer();
 	var rObj = [];
 
-	name.forEach(function(val,index) {
-		bower.commands
-		.list({paths:true})
-		.on('end', function (data) {
-			if(Object.keys(data).length > 0) {
-				Object.keys(data).forEach(function(p) {
-					if(val === p) {
-						rObj.push
-							(
-								{
-									'exist':true,
-									'name':p,
-									'path':data[p]
-								}
-							)
+	Object.keys(packages).forEach(function (val,index) {
+
+		if(packages[val] !== '') {
+			var file;
+
+			file = val + "#" + packages[val];
+
+			bower.commands
+				.list({paths:true})
+				.on('end', function (data) {
+					if(Object.keys(data).length > 0) {
+						Object.keys(data).forEach(function(p) {
+							if(p === file) {
+								rObj.push
+									(
+										{
+											'exist':true,
+											'name':file,
+											'path':data[p]
+										}
+									)
+							}
+						});
 					}
 				});
-			}
-		});
-	})
+
+		}else {
+			var file,folderName;
+
+			file = val;
+			folderName = val + "#last";
+
+			bower.commands
+				.list({paths:true})
+				.on('end', function (data) {
+					if(Object.keys(data).length > 0) {
+						Object.keys(data).forEach(function(p) {
+							if(p === folderName) {
+								rObj.push
+									(
+										{
+											'exist':true,
+											'name':file,
+											'path':data[p]
+										}
+									)
+							}
+						});
+					}
+				});
+
+		}
+	});
 
 	setTimeout( function() {
         deferred.resolve(rObj);
@@ -123,7 +169,9 @@ exports.searchPackageInstalled = function(name) {
 exports.minify = function(file) {
 	var result;
 
-	result = uglifyJS.minify('file', {
+	console.log("minify ...");
+
+	result = uglifyJS.minify(file, {
 		mangle: true,
 		compress: {
 			sequences: true,
@@ -137,7 +185,7 @@ exports.minify = function(file) {
 		}
 	});
 
-	fs.writeFileSync('compile.min.js', result.code);
+	return result;
 }
 
 exports.concat = function(f) {
@@ -170,13 +218,21 @@ exports.getFile = function(filePath) {
 
 exports.verifyMain = function(path) {
 	path.forEach(function (val) {
-		var n = val.path.search(val.name+".js");
+		var name, n;
+
+		name = val.name.replace(/[\d\#.]+/g, "");
+
+		n = val.path.search(name+".js");
+
 		if(n !== -1) {
 		}else {
-			val.path = val.path + "/" + val.name+".js";
+
+			val.path = val.path + "/" + name+".js";
 		}
 	});
 
 	return path; 
 }
+
+
 

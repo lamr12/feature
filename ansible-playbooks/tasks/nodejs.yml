@@ -1,3 +1,6 @@
 ---
 - name: install nodejs
   apt: name=nodejs state=present
+- name: linking nodejs to node for forever use
+  command: ln -s /usr/bin/nodejs /usr/bin/node
+  sudo: yes
