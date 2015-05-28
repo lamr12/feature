@@ -4,8 +4,6 @@
   sudo: true
 
   tasks:
-    - name: update apt cache
-      apt: update_cache=yes
     - include: tasks/nginx.yml
     - include: tasks/git.yml
     - include: tasks/nodejs.yml

@@ -6,5 +6,6 @@
   register: forever_list
   changed_when: false
 - name: "start server.js"
-  command: forever start /www/server.js
+  command: forever start --sourceDir /www --workingDir /www -o /www/out.log -e /www/err.log server.js
   when: "forever_list.stdout.find('/www/server.js') == -1"
+  sudo: yes
