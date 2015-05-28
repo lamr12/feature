@@ -4,6 +4,7 @@ var Q = require('q');
 var app = express(); 
 var fs = require('fs');
 var bower = require('bower');
+var CleanCss = require('clean-css');
 
 /* example route to manage 
 	http://127.0.0.1:3000/compile.js?jquery&underscore&angular&amplify
