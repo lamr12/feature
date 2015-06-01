@@ -17,10 +17,6 @@ server {
 	server_name localhost;
 
 	location / {
-		try_files $uri $uri/ =404;
-	}
-
-	location /yourapi {
 
 	    proxy_cache example;
 	    proxy_cache_valid 200 1d;
