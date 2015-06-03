@@ -107,7 +107,7 @@ app.get('/', function(req, res) {
   
 });
 	
-app.get('/yourapi/compile.js', function(req, res) {
+app.get('/compile.js', function(req, res) {
 	var promise = installPackages(req.query);
 	var files = Object.keys(req.query);
 
@@ -146,7 +146,7 @@ app.get('/yourapi/compile.js', function(req, res) {
 	})
 });
 
-app.get('/yourapi/compile.min.js', function(req, res) {
+app.get('/compile.min.js', function(req, res) {
 	var promise = installPackages(req.query);
 	var files = Object.keys(req.query);
 
