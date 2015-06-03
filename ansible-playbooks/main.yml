@@ -1,0 +1,11 @@
+---
+- hosts: all
+  user: vagrant
+  sudo: true
+
+  tasks:
+    - include: tasks/nginx.yml
+    - include: tasks/git.yml
+    - include: tasks/nodejs.yml
+    - include: tasks/npm.yml
+    - include: tasks/forever.yml
