@@ -172,13 +172,10 @@ exports.searchPackageInstalled = function(packages) {
 	return deferred.promise;
 };
 
-exports.minify = function(file,type) {
-	var result;
-
+exports.minify = function(file,type) {	
 	
-
 	if(type === 'js') {
-
+		var result;
 		console.log("minify js...");
 		
 		result = uglifyJS.minify(file, {
@@ -198,16 +195,20 @@ exports.minify = function(file,type) {
 		return result;
 
 	}else if (type === 'css') {
+		var result = {};
+		var files = [];
 
 		console.log("minify css...");
 
+		files.push(file);
+
 		var options = {
-		    maxLineLen: 0,
+			maxLineLen: 0,
 		    expandVars: false,
 		    cuteComments: true
 		};
 
-		result = uglifycss.processString(file, options);
+		result.code = uglifyCSS.processFiles(files, options);
 
 		return result;
 	}
