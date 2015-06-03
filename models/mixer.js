@@ -264,12 +264,12 @@ exports.verifyMain = function(req, ext) {
 		tmp.length = 0;
 		if (Array.isArray(item.path)) {
 			for (var j=0; j<item.path.length; j++) {
-		        if (item.path[j].search(ext) != -1){
+		        if (item.path[j].search(ext) != -1 && item.path[j].search(ext+'.map') == -1){
 					tmp.push(item.path[j]);
 				}
 		    }
 		} else{
-			if (item.path.search(ext) != -1){
+			if (item.path.search(ext) != -1 && item.path.search(ext+'.map') == -1){
 				tmp.push(item.path);
 			}
 		};		
