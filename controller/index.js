@@ -3,7 +3,6 @@ var express = require('express')
   , Compile = require('./compile');
 
 router.get('/', function(req, res) {
-  Compile.test();
   res.end("Mixer.js");  
 })
 
