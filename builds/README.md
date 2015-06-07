@@ -15,7 +15,7 @@ in the config,js file. By default, we have lodash and jquery available.
 }
 ```
 
-To create a new library build, create a file with a filename in the format `lodashBuild`. In the file do a function 
+To create a new library build, create a file from *buildTemplate.js* with a filename in the format `lodashBuild`. In the file do a function 
 that will handle the build. 
 This function will have as argument the json object that was passed in the query and it should return the custom build
 as a string buffer
@@ -32,7 +32,8 @@ export.lodashBuild = function(config) {
 
 ##Demo
 
-To test the custom build for lodash we need to check the json structure that we need to send(Open lodashBuild.js). For lodash it should be somthing like:
+To test the custom build for lodash we need to check the json structure that we need to send(Open lodashBuild.js). 
+For lodash it should be something like:
 
 ```
 {
