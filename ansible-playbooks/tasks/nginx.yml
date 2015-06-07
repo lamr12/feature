@@ -1,0 +1,5 @@
+---
+- name: install nginx
+  apt: name=nginx state=present
+- copy: src=files/nginx/default dest=/etc/nginx/sites-enabled/default owner=root group=root mode=777
+- service: name=nginx state=restarted

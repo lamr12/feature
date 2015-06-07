@@ -1,0 +1,11 @@
+---
+- name: install forever
+  npm: name=forever global=yes state=latest
+- name: "check list nodejs apps running"
+  command: forever list
+  register: forever_list
+  changed_when: false
+- name: "start server.js"
+  command: forever start --sourceDir /www --workingDir /www -o /www/out.log -e /www/err.log server.js
+  when: "forever_list.stdout.find('/www/server.js') == -1"
+  sudo: yes
