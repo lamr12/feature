@@ -2,7 +2,9 @@ var bower = require('bower');
 var Q = require('q');
 var shell = require('shelljs');
 var uglifyJS = require("uglify-js");
+var uglifyCSS = require("uglifycss");
 var fs = require('fs');
+var CleanCss = require('clean-css');
 
 var exports = module.exports = {};
 
@@ -72,6 +74,10 @@ exports.listPackage = function() {
 	return deferred.promise;
 };
 
+exports.test = function() {
+	console.log("test main");
+}
+
 exports.searchPackage = function(name) {
 	var deferred = Q.defer();
 
@@ -94,6 +100,7 @@ exports.searchPackage = function(name) {
 			} 
 		})
 		.on('error', function (err) {
+			console.log("hay papa");
 			console.log(err)
 			deferred.reject("error");
 		})
@@ -166,40 +173,49 @@ exports.searchPackageInstalled = function(packages) {
 	return deferred.promise;
 };
 
-exports.minify = function(file) {
+exports.minify = function(file,type) {
 	var result;
 
-	console.log("minify ...");
+	
 
-	result = uglifyJS.minify(file, {
-		mangle: true,
-		compress: {
-			sequences: true,
-			dead_code: true,
-			conditionals: true,
-			booleans: true,
-			unused: true,
-			if_return: true,
-			join_vars: true,
-			drop_console: true
-		}
-	});
+	if(type === 'js') {
 
-	return result;
+		console.log("minify js...");
+		
+		result = uglifyJS.minify(file, {
+			mangle: true,
+			compress: {
+				sequences: true,
+				dead_code: true,
+				conditionals: true,
+				booleans: true,
+				unused: true,
+				if_return: true,
+				join_vars: true,
+				drop_console: true
+			}
+		});
+
+		return result;
+
+	}else if (type === 'css') {
+
+		console.log("minify css...");
+
+		result = new CleanCss().minify([file]);
+		return result;
+	}
 }
 
-exports.concat = function(f) {
+/*exports.concat = function(f) {
 	var files = [];
-
 	console.log("concatenating...")
 	f.forEach(function(val) {
 		files.push(val.path);
 	})
-
 	console.log(files);
-
 	return shell.cat(files);
-}
+}*/
 
 exports.getFile = function(filePath) {
 	var deferred = Q.defer();
@@ -216,24 +232,58 @@ exports.getFile = function(filePath) {
 	return  deferred.promise;
 }
 
-exports.verifyMain = function(path) {
+/*exports.verifyMain = function(path, ext) {
+	console.log(path);
+	ext = ext || 'js';
 	path.forEach(function (val) {
 		var name, n;
-
 		name = val.name.replace(/[\d\#.]+/g, "");
-
-		n = val.path.search(name+".js");
-
+		n = val.path.search(name+'.'+ext);
+		//n = val.path.search('bootstrap.css');
+		console.log("ESTA ES N, " + n);
 		if(n !== -1) {
 		}else if (name === 'mathjs') {
 			val.path = val.path;
 		}else {
-			val.path = val.path + "/" + name+".js";
+			val.path = val.path + "/" + name+'.'+ext;
 		}
 	});
-
 	return path; 
+}*/
+
+exports.verifyMain = function(req, ext) {
+	ext = ext || 'js';
+	var tmp = [];
+	req.forEach(function (item) {
+		tmp.length = 0;
+		if (Array.isArray(item.path)) {
+			for (var j=0; j<item.path.length; j++) {
+		        if (item.path[j].search(ext) != -1 && item.path[j].search(ext+'.map') == -1){
+					tmp.push(item.path[j]);
+				}
+		    }
+		} else{
+			if (item.path.search(ext) != -1 && item.path.search(ext+'.map') == -1){
+				tmp.push(item.path);
+			}
+		};		
+	    //console.log(tmp);
+		item.path = tmp.slice();
+	});
+	//console.log(req)
+	return req; 
 }
 
+exports.concat = function(f) {
+	var files = [];
 
+	f.forEach(function(item) {
+		item.path.forEach(function(p){
+			files.push(p);
+		});
+	})
 
+	console.log(files);
+
+	return shell.cat(files);
+}
