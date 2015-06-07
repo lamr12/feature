@@ -1,0 +1,42 @@
+{
+  "name": "mixerjs",
+  "version": "1.0.0",
+  "description": "Web server that serves multiple JavaScript or CSS libraries in a single http request",
+  "main": "mixer.js",
+  "dependencies": {
+    "express"   : "4.12.3",
+    "bower"     : "1.4.1",
+    "grunt-cli" : "0.1.13",
+    "shelljs"   : "0.4.0",
+    "uglify-js" : "2.4.21",
+    "q"         : "1.4.0"
+  },
+  
+  "devDependencies": {
+    "karma"                 : "0.12.36",
+    "karma-jasmine"         : "0.3.5",
+    "karma-cli"             : "0.0.4",
+    "karma-chrome-launcher" : "0.1.12"
+  },
+  
+  "scripts": {
+    "start" : "node mixer.js",
+    "test"  : "karma start"
+  },
+  
+  "contributors": [{
+    "name": "Andres Jorquera",
+    "email": "jorquerad@jortech.com.ve" 
+  }],
+  
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jortechve/mixerjs.git"
+  },
+  "author": "JorTech",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jortechve/mixerjs/issues"
+  },
+  "homepage": "https://github.com/jortechve/mixerjs"
+}

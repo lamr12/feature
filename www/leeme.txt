@@ -1,1 +1,0 @@
-ejemplo compartiendo archivos con vagrant 

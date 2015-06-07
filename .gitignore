@@ -1,0 +1,8 @@
+.vagrant/
+.settings/
+
+bower_components
+node_modules/
+
+*.log
+*.css
