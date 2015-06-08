@@ -123,7 +123,7 @@ exports.compile = function(req,res,ext,minify) {
 		res.writeHead(resp.code, resp.msg, {'content-type' : 'text/plain'});
 		res.end(JSON.stringify(resp));
 
-	}else if(Mixer.duplicateQuery(req.query)) {
+	}else if(Mixer.duplicateQuery(req.query) || Mixer.duplicateQueryInURL(req)) {
 		var resp = Mixer.manageErrors("DUPLICATED");
 		
 		res.writeHead(resp.code, resp.msg, {'content-type' : 'text/plain'});
@@ -152,9 +152,9 @@ exports.compile = function(req,res,ext,minify) {
 	}
 }
 
-exports.test = function(req) {
-	console.log(Mixer.duplicateQuery(req.query));
-}
+// exports.test = function(req) {
+// 	console.log(Mixer.duplicateQueryInURL(req));
+// }
 
 
 

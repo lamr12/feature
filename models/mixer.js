@@ -27,6 +27,34 @@ exports.duplicateQuery = function(query) {
 	return resp;
 };
 
+exports.duplicateQueryInURL = function(req) {
+    var posInit, query, keys=[];
+
+	posInit = req.originalUrl.indexOf('?',0);
+	posInit = posInit + 1;
+
+	query = req.originalUrl.substring(posInit);
+	query = query.split('&');
+
+	query.forEach(function(item) {
+		var r,c=[];
+
+		r = item.indexOf('=',0);
+		if(r === -1) {
+			keys.push(item);
+		}else {
+			keys.push(item.substring(0,r));
+		}
+	});
+
+	keysReduces = keys.slice().sort(function(a,b){
+		return a - b
+	})
+	.reduce(function(a,b){if (a.slice(-1)[0] !== b) a.push(b);return a;},[]);
+
+	if (query.length === keysReduces.length) return false; return true;
+};
+
 exports.manageErrors = function(error,file) {
 	var errorList,err;
 	file = file || false;
