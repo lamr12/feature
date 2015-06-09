@@ -18,6 +18,88 @@ exports.isEmptyJSON = function(obj) {
   	return true;
 };
 
+exports.duplicateQuery = function(query) {
+	var resp, files = Object.keys(query);
+
+	files.forEach(function(f) {
+		resp = (query[f] instanceof Array);
+	});
+
+	return resp;
+};
+
+exports.duplicateQueryInURL = function(req) {
+    var posInit, query, keys=[];
+
+	posInit = req.originalUrl.indexOf('?',0);
+	posInit = posInit + 1;
+
+	query = req.originalUrl.substring(posInit);
+	query = query.split('&');
+
+	query.forEach(function(item) {
+		var r,c=[];
+
+		r = item.indexOf('=',0);
+		if(r === -1) {
+			keys.push(item);
+		}else {
+			keys.push(item.substring(0,r));
+		}
+	});
+
+	keysReduces = keys.slice().sort(function(a,b){
+		return a - b
+	})
+	.reduce(function(a,b){if (a.slice(-1)[0] !== b) a.push(b);return a;},[]);
+
+	if (query.length === keysReduces.length) return false; return true;
+};
+
+exports.manageErrors = function(error,file) {
+	var errorList,err;
+	file = file || false;
+
+	errorList = {
+		"EMPTY" : 
+		{
+			"code" : 400,
+			"msg" : 'Not supplied parameters'
+		},
+		"DUPLICATED" : 
+		{
+			"code" : 409,
+			"msg" : 'Duplicated query'
+		},
+		"ECONFLICT" : 
+		{
+			"code" : 409,
+			"msg" : 'Conflict error',
+			"file" : file
+		},
+		"ENOTFOUND" : 
+		{
+			"code" : 404,
+			"msg" : 'File not found',
+			"file" : file
+		},
+		"ENORESTARGET" : 
+		{
+			"code" : 404,
+			"msg" : 'File version wrong',
+			"file" : file
+		}
+	};
+
+	err = errorList[error];
+
+	if(err === "undefined") {
+		return {"msg" : "Error not managed: " + error};
+	}else {
+		return err;
+	}
+}
+
 
 exports.installPackage = function(fileName,lastVersion) {
 	var deferred = Q.defer();
@@ -43,15 +125,17 @@ exports.installPackage = function(fileName,lastVersion) {
 		.on('error', function (err) {
 
 			if(err.code === "ECONFLICT") {
-				deferred.reject({"msg":"Conflict error.", "file":fileName});
+				deferred.reject(exports.manageErrors(err.code,fileName));
+
 			}
 
-			if (err.code === "ENOTFOUND" || err.code === "ENORESTARGET") {
-				deferred.reject({"msg":"File not found.", "file":fileName}); 		
+			if (err.code === "ENOTFOUND") {
+				deferred.reject(exports.manageErrors(err.code,fileName)); 		
+ 				
  			}
 
  			if (err.code === "ENORESTARGET") {
- 				deferred.reject({"msg":"File version wrong.", "file":fileName});
+ 				deferred.reject(exports.manageErrors(err.code,fileName));
  			}
 		})
 
@@ -100,7 +184,7 @@ exports.searchPackage = function(name) {
 			} 
 		})
 		.on('error', function (err) {
-			console.log("hay papa");
+			console.log(name);
 			console.log(err)
 			deferred.reject("error");
 		})
@@ -173,13 +257,10 @@ exports.searchPackageInstalled = function(packages) {
 	return deferred.promise;
 };
 
-exports.minify = function(file,type) {
-	var result;
-
+exports.minify = function(file,type) {	
 	
-
 	if(type === 'js') {
-
+		var result;
 		console.log("minify js...");
 		
 		result = uglifyJS.minify(file, {
@@ -199,7 +280,6 @@ exports.minify = function(file,type) {
 		return result;
 
 	}else if (type === 'css') {
-
 		console.log("minify css...");
 
 		result = new CleanCss().minify([file]);

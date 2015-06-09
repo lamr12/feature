@@ -24,25 +24,26 @@ var installPackages = function(packages) {
 				file = val + "#" + packages[val];
 
 				Mixer.searchPackage(file)
-		 		.then(function (data) {
-	 			if(data.exist === false) {
-	 				Mixer.installPackage(file, lastVersion)
-	 					.then(function (data) {
-	 						Mixer.listPackage()
-	 							.then(function (data) {
-	 								deferred.resolve(true);
-	 							}, function(err) {
-	 								deferred.reject(err);
-	 							})
-	 					}, function(err) {
-	 						deferred.reject(err);
-	 					})
-	 			}else if(data.exist === true) {
-		 			deferred.resolve(true);			
-	 			}
-		 		}, function(err) {
-		 			deferred.reject(err);
-		 		});
+			 		.then(function (data) {
+			 			if(data.exist === false) {
+			 				Mixer.installPackage(file, lastVersion)
+			 					.then(function (data) {
+			 						Mixer.listPackage()
+			 							.then(function (data) {
+			 								deferred.resolve(true);
+			 							}, function(err) {
+			 								deferred.reject(err);
+			 							})
+			 					}, function(err) {
+			 						deferred.reject(err);
+			 					})
+			 			}else if(data.exist === true) {
+				 			deferred.resolve(true);			
+			 			}
+			 		}, function(err) {
+			 			deferred.reject(err);
+			 		});
+
 			 	promises.push(deferred.promise);
 
 			} else {
@@ -53,26 +54,26 @@ var installPackages = function(packages) {
 				
 	 			Mixer.searchPackage(last)
 			 		.then(function (data) {
-		 			if(data.exist === false) {
-		 				Mixer.installPackage(val,lastVersion)
-		 					.then(function (data) {
-		 						Mixer.listPackage()
-		 							.then(function (data) {
-		 							deferred.resolve(true);
-		 							}, function (err) {
-		 							deferred.reject(err);
-		 							})
-		 					}, function(err) {
-		 						deferred.reject(err);
-		 					})
-		 			}else if(data.exist === true) {
-		 				deferred.resolve(true);
-		 			}
-		 		}, function(err) {
-		 			deferred.reject(err);
-		 		});
+			 			if(data.exist === false) {
+			 				Mixer.installPackage(val,lastVersion)
+			 					.then(function (data) {
+			 						Mixer.listPackage()
+			 							.then(function (data) {
+			 							deferred.resolve(true);
+			 							}, function (err) {
+			 							deferred.reject(err);
+			 							})
+			 					}, function(err) {
+			 						deferred.reject(err);
+			 					})
+			 			}else if(data.exist === true) {
+			 				deferred.resolve(true);
+			 			}
+			 		}, function(err) {
+			 			deferred.reject(err);
+			 		});
 
-			 	promises.push(deferred.promise);
+		 		promises.push(deferred.promise);
 			}	
 		});
 		
@@ -89,7 +90,7 @@ var compileData = function (res, data, ext, minify){
 		fs.writeFileSync('compile.'+ext, file);
 		if (minify) {
 			var result = Mixer.minify('compile.'+ext, ext);
-			fs.writeFileSync('compile.min.'+ext, result.styles);
+			fs.writeFileSync('compile.min.'+ext, result.styles || result.code);
 			res.sendFile(dirName + '/compile.min.'+ext);
 		} else{
 			res.sendFile(dirName + '/compile.'+ext);
@@ -104,7 +105,7 @@ var compileData = function (res, data, ext, minify){
 			
 			if (minify) {
 				var result = Mixer.minify('compile.'+ext, ext);
-				fs.writeFileSync('compile.min.'+ext, result.styles);
+				fs.writeFileSync('compile.min.'+ext, result.styles || result.code);
 				res.sendFile(dirName + '/compile.min.'+ext);
 			} else{
 				res.sendFile(dirName + '/compile.'+ext);
@@ -117,14 +118,17 @@ exports.compile = function(req,res,ext,minify) {
 	ext = ext || 'js';
 	minify = minify || false;
 	if(Mixer.isEmptyJSON(req.query)) {
-		var resp = {};
-
-		resp.code = 400;
-		resp.msg = 'Not supplied parameters';
-		resp.content = {'content-type' : 'text/plain'};
+		var resp = Mixer.manageErrors("EMPTY");
 		
-		 res.writeHead(resp.code, resp.msg, resp.content);
-		 res.end(resp.msg);
+		res.writeHead(resp.code, resp.msg, {'content-type' : 'text/plain'});
+		res.end(JSON.stringify(resp));
+
+	}else if(Mixer.duplicateQuery(req.query) || Mixer.duplicateQueryInURL(req)) {
+		var resp = Mixer.manageErrors("DUPLICATED");
+		
+		res.writeHead(resp.code, resp.msg, {'content-type' : 'text/plain'});
+		res.end(JSON.stringify(resp));
+
 	}else {
 		var promise = installPackages(req.query);
 		var files = Object.keys(req.query);
@@ -140,18 +144,17 @@ exports.compile = function(req,res,ext,minify) {
 				compileData(res, data, ext, minify);
 			});
 		}, function(err) {
-			var code = 404;
 			var msg = err.msg + " file:" + err.file
-			
-			res.writeHead(code, msg, {'content-type' : 'text/plain'});
-			res.end(msg);
+			 
+			res.writeHead(err.code, msg, {'content-type' : 'text/plain'});
+			res.end(JSON.stringify(err));
 		})
 	}
 }
 
-exports.test = function() {
-	console.log(path.join(dirName, '../'));
-	Mixer.test();
-}
+// exports.test = function(req) {
+// 	console.log(Mixer.duplicateQueryInURL(req));
+// }
+
 
 
