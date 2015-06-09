@@ -4,6 +4,7 @@ var shell = require('shelljs');
 var uglifyJS = require("uglify-js");
 var uglifyCSS = require("uglifycss");
 var fs = require('fs');
+var replace = require('replace');
 var CleanCss = require('clean-css');
 
 var exports = module.exports = {};
@@ -32,6 +33,16 @@ exports.installPackage = function(fileName,lastVersion) {
 			name = fileName;
 			name = name.replace(/[\d\#.]+/g, "");
 
+			if(fileName == 'bootstrap' && lastVersion){
+				replace({
+				    regex: "../fonts/",
+				    replacement: "bower_components/bootstrap#last/dist/fonts/",
+				    paths: ['bower_components/bootstrap/dist/css/bootstrap.css'],
+				    recursive: true,
+				    silent: true,
+				});
+			}
+
 			if(lastVersion) {
 				fs.rename('bower_components/'+name,'bower_components/'+rename);
 			}else {
@@ -53,7 +64,9 @@ exports.installPackage = function(fileName,lastVersion) {
  			if (err.code === "ENORESTARGET") {
  				deferred.reject({"msg":"File version wrong.", "file":fileName});
  			}
-		})
+		});
+
+	
 
 	return deferred.promise;
 };
