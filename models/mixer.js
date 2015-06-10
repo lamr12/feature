@@ -4,8 +4,14 @@ var shell = require('shelljs');
 var uglifyJS = require("uglify-js");
 var uglifyCSS = require("uglifycss");
 var fs = require('fs');
+var exec = require('child_process').exec;
 
 var exports = module.exports = {};
+var bowerDefault = {
+	"name": "jquery",
+	"version": "custom",
+	"main": "jquery-custom.js"
+};
 
 exports.isEmptyJSON = function(obj) {
 	var name;
@@ -25,6 +31,34 @@ exports.duplicateQuery = function(query) {
 	});
 
 	return resp;
+};
+
+exports.duplicateQueryInURL = function(req) {
+    var posInit, query, keys=[];
+
+	posInit = req.originalUrl.indexOf('?',0);
+	posInit = posInit + 1;
+
+	query = req.originalUrl.substring(posInit);
+	query = query.split('&');
+
+	query.forEach(function(item) {
+		var r,c=[];
+
+		r = item.indexOf('=',0);
+		if(r === -1) {
+			keys.push(item);
+		}else {
+			keys.push(item.substring(0,r));
+		}
+	});
+
+	keysReduces = keys.slice().sort(function(a,b){
+		return a - b
+	})
+	.reduce(function(a,b){if (a.slice(-1)[0] !== b) a.push(b);return a;},[]);
+
+	if (query.length === keysReduces.length) return false; return true;
 };
 
 exports.manageErrors = function(error,file) {
@@ -170,13 +204,15 @@ exports.searchPackageInstalled = function(packages) {
 	Object.keys(packages).forEach(function (val,index) {
 
 		if(packages[val] !== '') {
-			var file;
 
-			file = val + "#" + packages[val];
-
-			bower.commands
+			if(typeof JSON.parse(packages[val]) === 'number') {
+				var file;
+				file = val + "#" + packages[val];
+				bower.commands
 				.list({paths:true})
 				.on('end', function (data) {
+					console.log("listando paquetes con version...")
+					console.log(data);
 					if(Object.keys(data).length > 0) {
 						Object.keys(data).forEach(function(p) {
 							if(p === file) {
@@ -192,6 +228,32 @@ exports.searchPackageInstalled = function(packages) {
 						});
 					}
 				});
+			}
+
+			if(typeof JSON.parse(packages[val]) === 'object') {
+				var file;
+				file = val + "#custom";
+
+				bower.commands
+				.list({paths:true})
+				.on('end', function (data) {
+					console.log("listando paquetes custom...")
+					if(Object.keys(data).length > 0) {
+						Object.keys(data).forEach(function(p) {
+							if(p === file) {
+								rObj.push
+									(
+										{
+											'exist':true,
+											'name':file,
+											'path':data[p]
+										}
+									)
+							}
+						});
+					}
+				});
+			}
 
 		}else {
 			var file,folderName;
@@ -202,6 +264,8 @@ exports.searchPackageInstalled = function(packages) {
 			bower.commands
 				.list({paths:true})
 				.on('end', function (data) {
+					console.log("listando paquetes...")
+					console.log(data);
 					if(Object.keys(data).length > 0) {
 						Object.keys(data).forEach(function(p) {
 							if(p === folderName) {
@@ -315,6 +379,7 @@ exports.getFile = function(filePath) {
 }*/
 
 exports.verifyMain = function(req, ext) {
+	console.log(req);
 	ext = ext || 'js';
 	var tmp = [];
 	req.forEach(function (item) {
@@ -349,4 +414,40 @@ exports.concat = function(f) {
 	console.log(files);
 
 	return shell.cat(files);
+}
+
+exports.customBuild = function(f,obj) {
+	var child, deferred = Q.defer();
+	
+	if(f === 'jquery') {
+		console.log("Custom Build Jquery...");
+		console.log(obj);
+		child = exec('mkdir -p bower_components/jquery#custom');
+		child.stdout.on('end',function() {
+			var child;
+
+			fs.writeFile('bower_components/jquery#custom/.bower.json', JSON.stringify(bowerDefault), function (err) {
+				if (err) throw err;
+				console.log("create file .bower.json");
+			});
+
+			if(obj.modules.length > 0) {
+				child = exec('jquery-builder -e ' + obj.modules +' > bower_components/jquery#custom/jquery-custom.js');
+				child.stdout.on('end',function() {
+			 		console.log("creado jquery-custom.js");
+			 		deferred.resolve(true);
+				});
+			}else{
+				console.log("err not modules defined");
+				deferred.reject("error not modules defined.");
+			}
+		});
+		
+	}else {
+		console.log("err Custom Build");
+		return deferred.reject("erro");
+	}
+
+	return  deferred.promise;
+
 }

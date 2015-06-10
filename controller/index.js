@@ -22,5 +22,4 @@ router.get('/compile.min.css', function(req, res) {
   Compile.compile(req, res, 'css', true);
 })
 
-
 module.exports = router

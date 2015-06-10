@@ -12,7 +12,8 @@
     "shelljs": "^0.4.0",
     "uglify-js": "^2.4.21",
     "q": "^1.4.0",
-    "uglifycss": "^0.0.15"
+    "uglifycss": "^0.0.15",
+    "jquery-builder": "^0.7.0"	
   },
   "repository": {
     "type": "git",
