@@ -80,37 +80,55 @@ var installPackages = function(packages) {
 	}
 }
 
-var compileData = function (res, data, ext, minify){
+var compileData = function (req, res, data, ext, minify){
 	ext = ext || 'js';
 	minify = minify || false;
-	if(data.length > 1) {
-		data = Mixer.verifyMain(data, ext)
-		var file = Mixer.concat(data);
-		fs.writeFileSync('compile.'+ext, file);
-		if (minify) {
-			var result = Mixer.minify('compile.'+ext, ext);
-			fs.writeFileSync('compile.min.'+ext, result.styles);
-			res.sendFile(dirName + '/compile.min.'+ext);
-		} else{
-			res.sendFile(dirName + '/compile.'+ext);
-		};
-	}else if(data.length === 1) {
-		var file,p;
-		data = Mixer.verifyMain(data, ext);
-		file = dirName + data[0].path;
-		p = Mixer.getFile(file);
-		p.then(function(f) {
-			fs.writeFileSync('compile.'+ext, f);
+	var v = Mixer.verifyDependencies(req);
+	v.then(function(response){
+		if(response.length == 0){
+			if(data.length > 1) {
+				data = Mixer.verifyMain(data, ext)
+				var file = Mixer.concat(data);
+				fs.writeFileSync('compile.'+ext, file);
+				if (minify) {
+					var result = Mixer.minify('compile.'+ext, ext);
+					fs.writeFileSync('compile.min.'+ext, result.styles);
+					res.sendFile(dirName + '/compile.min.'+ext);
+				} else{
+					res.sendFile(dirName + '/compile.'+ext);
+				};
+			}else if(data.length === 1) {
+				var file,p;
+				data = Mixer.verifyMain(data, ext);
+				file = dirName + data[0].path;
+				p = Mixer.getFile(file);
+				p.then(function(f) {
+					fs.writeFileSync('compile.'+ext, f);
+					
+					if (minify) {
+						var result = Mixer.minify('compile.'+ext, ext);
+						fs.writeFileSync('compile.min.'+ext, result.styles);
+						res.sendFile(dirName + '/compile.min.'+ext);
+					} else{
+						res.sendFile(dirName + '/compile.'+ext);
+					};
+				});
+			}
+		}else{
+			var resp = {};
+
+			resp.code = 400;
+			resp.msg = 'Some dependencies are missing: ';
+			response.forEach(function(err){
+				resp.msg += err.message + ', ';
+			});
+			resp.content = {'content-type' : 'text/plain'};
 			
-			if (minify) {
-				var result = Mixer.minify('compile.'+ext, ext);
-				fs.writeFileSync('compile.min.'+ext, result.styles);
-				res.sendFile(dirName + '/compile.min.'+ext);
-			} else{
-				res.sendFile(dirName + '/compile.'+ext);
-			};
-		});
-	}
+			res.writeHead(resp.code, resp.msg, resp.content);
+			res.end(resp.msg);
+		}
+	});
+	
 };
 
 exports.compile = function(req,res,ext,minify) {
@@ -123,8 +141,8 @@ exports.compile = function(req,res,ext,minify) {
 		resp.msg = 'Not supplied parameters';
 		resp.content = {'content-type' : 'text/plain'};
 		
-		 res.writeHead(resp.code, resp.msg, resp.content);
-		 res.end(resp.msg);
+		res.writeHead(resp.code, resp.msg, resp.content);
+		res.end(resp.msg);
 	}else {
 		var promise = installPackages(req.query);
 		var files = Object.keys(req.query);
@@ -137,7 +155,7 @@ exports.compile = function(req,res,ext,minify) {
 			p = Mixer.searchPackageInstalled(req.query);
 
 			p.then(function(data) {
-				compileData(res, data, ext, minify);
+				compileData(req, res, data, ext, minify);
 			});
 		}, function(err) {
 			var code = 404;
