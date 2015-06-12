@@ -4,7 +4,8 @@
   "description": "test nodejs and nginx",
   "main": "n",
   "dependencies": {
-    "express": "^4.12.3"
+    "express": "^4.12.3",
+    "jscs": "https://github.com/ADDR2/node-jscs/tarball/974a776113c5ff2a5468006c68c6e4b8de80e334"	
   },
   "devDependencies": {
     "bower": "^1.4.1",

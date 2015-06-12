@@ -6,12 +6,8 @@ var uglifyCSS = require("uglifycss");
 var fs = require('fs');
 var exec = require('child_process').exec;
 
+
 var exports = module.exports = {};
-var bowerDefault = {
-	"name": "jquery",
-	"version": "custom",
-	"main": "jquery-custom.js"
-};
 
 exports.isEmptyJSON = function(obj) {
 	var name;
@@ -69,30 +65,37 @@ exports.manageErrors = function(error,file) {
 		"EMPTY" : 
 		{
 			"code" : 400,
-			"msg" : 'Not supplied parameters'
+			"msg" : 'Not supplied parameters',
+			"file" : "",
+			"extra": ""
 		},
 		"DUPLICATED" : 
 		{
 			"code" : 409,
-			"msg" : 'Duplicated query'
+			"msg" : 'Duplicated query',
+			"file" : "",
+			"extra": ""
 		},
 		"ECONFLICT" : 
 		{
 			"code" : 409,
 			"msg" : 'Conflict error',
-			"file" : file
+			"file" : file,
+			"extra": ""
 		},
 		"ENOTFOUND" : 
 		{
 			"code" : 404,
 			"msg" : 'File not found',
-			"file" : file
+			"file" : file,
+			"extra": ""
 		},
 		"ENORESTARGET" : 
 		{
 			"code" : 404,
 			"msg" : 'File version wrong',
-			"file" : file
+			"file" : file,
+			"extra" : ""
 		}
 	};
 
@@ -414,40 +417,4 @@ exports.concat = function(f) {
 	console.log(files);
 
 	return shell.cat(files);
-}
-
-exports.customBuild = function(f,obj) {
-	var child, deferred = Q.defer();
-	
-	if(f === 'jquery') {
-		console.log("Custom Build Jquery...");
-		console.log(obj);
-		child = exec('mkdir -p bower_components/jquery#custom');
-		child.stdout.on('end',function() {
-			var child;
-
-			fs.writeFile('bower_components/jquery#custom/.bower.json', JSON.stringify(bowerDefault), function (err) {
-				if (err) throw err;
-				console.log("create file .bower.json");
-			});
-
-			if(obj.modules.length > 0) {
-				child = exec('jquery-builder -e ' + obj.modules +' > bower_components/jquery#custom/jquery-custom.js');
-				child.stdout.on('end',function() {
-			 		console.log("creado jquery-custom.js");
-			 		deferred.resolve(true);
-				});
-			}else{
-				console.log("err not modules defined");
-				deferred.reject("error not modules defined.");
-			}
-		});
-		
-	}else {
-		console.log("err Custom Build");
-		return deferred.reject("erro");
-	}
-
-	return  deferred.promise;
-
 }
