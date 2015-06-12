@@ -189,8 +189,6 @@ exports.searchPackageInstalled = function(packages) {
 exports.minify = function(file,type) {
 	var result;
 
-	
-
 	if(type === 'js') {
 
 		console.log("minify js...");
@@ -302,6 +300,8 @@ exports.concat = function(f) {
 	return shell.cat(files);
 };
 
+
+//Verify the dependecies of each requeriment reading the bower.json file
 exports.verifyDependencies = function(req){
 	var deferred = Q.defer();
 	var files = Object.keys(req.query);
@@ -312,7 +312,7 @@ exports.verifyDependencies = function(req){
 			'version': req.query[f]
 		});
 	});
-	var path, bowerjson, response = [];
+	var path, bowerjson, response = [], wait=false;
 	items.forEach(function(item){
 		path = 'bower_components/'+item.name;
 		bowerjson = {};
@@ -322,35 +322,25 @@ exports.verifyDependencies = function(req){
 		} else{
 			path += '#' + item.version + '/';
 		};
-
 		path += 'bower.json';
-
-		fs.readFile(path, 'utf-8', function(err,data) {
-		    if (!err) {
-		    	bowerjson = JSON.parse(data);
-				if(bowerjson.dependencies != undefined){
-			    	var dependencies = Object.keys(bowerjson.dependencies);
-					dependencies.forEach(function(dep){
-						var missing = true;
-						files.forEach(function(f){
-							if(dep == f){
-								missing = false;
-							}
-						});
-						if(missing){
-							response.push({error: 'dependenciesMissing', message: dep+' of '+item.name});
-						}
-					});
+		bowerjson = JSON.parse(fs.readFileSync(path, 'utf-8'));
+		if(bowerjson.dependencies != undefined){
+	    	var dependencies = Object.keys(bowerjson.dependencies);
+			dependencies.forEach(function(dep){
+				var missing = true;
+				files.forEach(function(f){
+					if(dep == f){
+						missing = false;
+					}
+				});
+				if(missing){
+					shell.rm('-rf', 'bower_components/'+dep);
+					response.push({error: 'dependenciesMissing', message: dep+' of '+item.name});
 				}
-				deferred.resolve(response);
-		    }else{
-		        console.log(err);
-		        deferred.reject("error");
-		    }
-		});
-		
+			});
+		}
 
 	});
-
+	deferred.resolve(response);
 	return  deferred.promise;
 };
